@@ -1,18 +1,16 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { File, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ProductsTable } from './products-table';
-import { getProducts } from '@/lib/db';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getBookings } from '@/lib/db';
+import { File, PlusCircle } from 'lucide-react';
+import { BookingsTable } from './bookings-table';
 
-export default async function ProductsPage(
-  props: {
-    searchParams: Promise<{ q: string; offset: string }>;
-  }
-) {
+export default async function BookingsPage(props: {
+  searchParams: Promise<{ q: string; offset: string }>;
+}) {
   const searchParams = await props.searchParams;
   const search = searchParams.q ?? '';
   const offset = searchParams.offset ?? 0;
-  const { products, newOffset, totalProducts } = await getProducts(
+  const { bookings, newOffset, totalBookings } = await getBookings(
     search,
     Number(offset)
   );
@@ -22,10 +20,13 @@ export default async function ProductsPage(
       <div className="flex items-center">
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="draft">Draft</TabsTrigger>
-          <TabsTrigger value="archived" className="hidden sm:flex">
-            Archived
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="verified">Verified</TabsTrigger>
+          <TabsTrigger value="rejected" className="hidden sm:flex">
+            Rejected
+          </TabsTrigger>
+          <TabsTrigger value="redeemed" className="hidden sm:flex">
+            Redeemed
           </TabsTrigger>
         </TabsList>
         <div className="ml-auto flex items-center gap-2">
@@ -38,16 +39,16 @@ export default async function ProductsPage(
           <Button size="sm" className="h-8 gap-1">
             <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Product
+              Add Booking
             </span>
           </Button>
         </div>
       </div>
       <TabsContent value="all">
-        <ProductsTable
-          products={products}
+        <BookingsTable
+          bookings={bookings}
           offset={newOffset ?? 0}
-          totalProducts={totalProducts}
+          totalBookings={totalBookings}
         />
       </TabsContent>
     </Tabs>
