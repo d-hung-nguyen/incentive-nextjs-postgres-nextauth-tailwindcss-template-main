@@ -9,6 +9,7 @@ import {
   Users2
 } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 import { VercelLogo } from '@/components/icons';
 import {
@@ -45,7 +46,13 @@ export default function DashboardLayout({
           <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
             <MobileNav />
             <DashboardBreadcrumb />
-            <SearchInput />
+            <Suspense
+              fallback={
+                <div className="w-[200px] h-8 bg-muted animate-pulse rounded" />
+              }
+            >
+              <SearchInput />
+            </Suspense>
             <User />
           </header>
           <main className="grid flex-1 items-start gap-2 p-4 sm:px-6 sm:py-0 md:gap-4 bg-muted/40">

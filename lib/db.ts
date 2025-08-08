@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { neon } from '@neondatabase/serverless';
-import { count, eq, ilike } from 'drizzle-orm';
+import { and, count, desc, eq, ilike } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-http';
 import {
   date,
@@ -235,6 +235,103 @@ export async function getBookings(
     newOffset,
     totalBookings: totalBookings[0].count
   };
+}
+
+// NEW: Add getBookingsByStatus function
+export async function getBookingsByStatus(
+  search: string,
+  offset: number,
+  status: string = 'all'
+): Promise<{
+  bookings: (SelectBooking & {
+    hotelName: string;
+    roomTypeName: string;
+    agentName: string;
+  })[];
+  newOffset: number | null;
+  totalBookings: number;
+}> {
+  if (!db) {
+    return { bookings: [], newOffset: null, totalBookings: 0 };
+  }
+
+  const bookingsPerPage = 5;
+
+  try {
+    // Add search and status conditions
+    const conditions = [];
+    if (search) {
+      conditions.push(ilike(bookings.guestName, `%${search}%`));
+    }
+    if (status !== 'all') {
+      conditions.push(eq(bookings.status, status as any));
+    }
+
+    // Build the base query with conditions
+    let baseQuery = db
+      .select({
+        id: bookings.id,
+        agentId: bookings.agentId,
+        hotelId: bookings.hotelId,
+        roomTypeId: bookings.roomTypeId,
+        guestName: bookings.guestName,
+        arrivalDate: bookings.arrivalDate,
+        numberOfNights: bookings.numberOfNights,
+        points: bookings.points,
+        yourRef: bookings.yourRef,
+        hotelRef: bookings.hotelRef,
+        status: bookings.status,
+        createdAt: bookings.createdAt,
+        updatedAt: bookings.updatedAt,
+        hotelName: hotels.name,
+        roomTypeName: roomTypes.name,
+        agentName: agents.firstName
+      })
+      .from(bookings)
+      .leftJoin(hotels, eq(bookings.hotelId, hotels.id))
+      .leftJoin(roomTypes, eq(bookings.roomTypeId, roomTypes.id))
+      .leftJoin(agents, eq(bookings.agentId, agents.id));
+
+    if (conditions.length > 0) {
+      baseQuery = baseQuery.where(
+        conditions.length === 1 ? conditions[0] : and(...conditions)
+      ) as typeof baseQuery;
+    }
+
+    // Get total count for pagination
+    let countQuery = db.select({ count: count(bookings.id) }).from(bookings);
+
+    if (conditions.length > 0) {
+      countQuery = countQuery.where(
+        conditions.length === 1 ? conditions[0] : and(...conditions)
+      ) as typeof countQuery;
+    }
+
+    const [results, totalCount] = await Promise.all([
+      baseQuery
+        .orderBy(desc(bookings.createdAt))
+        .limit(bookingsPerPage)
+        .offset(offset),
+      countQuery
+    ]);
+
+    const newOffset =
+      results.length >= bookingsPerPage ? offset + bookingsPerPage : null;
+
+    return {
+      bookings: results.map((row) => ({
+        ...row,
+        hotelName: row.hotelName || 'Unknown Hotel',
+        roomTypeName: row.roomTypeName || 'Unknown Room',
+        agentName: row.agentName || 'Unknown Agent'
+      })),
+      newOffset,
+      totalBookings: totalCount[0]?.count || 0
+    };
+  } catch (error) {
+    console.error('Error fetching bookings by status:', error);
+    return { bookings: [], newOffset: null, totalBookings: 0 };
+  }
 }
 
 export async function deleteBookingById(id: string) {

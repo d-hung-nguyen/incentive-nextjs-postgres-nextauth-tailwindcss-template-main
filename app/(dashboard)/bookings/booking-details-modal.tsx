@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { SelectBooking } from '@/lib/db';
 import { Bed, Building2, Calendar, Hash, User } from 'lucide-react';
-import { deleteBooking } from './actions';
+import { deleteBooking } from '../actions';
 
 type BookingWithDetails = SelectBooking & {
   hotelName: string;
