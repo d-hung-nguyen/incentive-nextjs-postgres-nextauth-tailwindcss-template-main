@@ -17,7 +17,16 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 
-export const db = drizzle(neon(process.env.POSTGRES_URL!));
+// Handle missing POSTGRES_URL during build
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
+if (!connectionString && process.env.NODE_ENV !== 'production') {
+  console.warn(
+    'No database connection string found. Some features may not work.'
+  );
+}
+
+export const db = connectionString ? drizzle(neon(connectionString)) : null;
 
 export const statusEnum = pgEnum('status', ['active', 'inactive', 'archived']);
 export const bookingStatusEnum = pgEnum('booking_status', [
@@ -139,6 +148,10 @@ export async function getBookings(
   newOffset: number | null;
   totalBookings: number;
 }> {
+  if (!db) {
+    return { bookings: [], newOffset: null, totalBookings: 0 };
+  }
+
   // Search bookings with joins
   if (search) {
     const searchResults = await db
@@ -225,6 +238,7 @@ export async function getBookings(
 }
 
 export async function deleteBookingById(id: string) {
+  if (!db) return;
   await db.delete(bookings).where(eq(bookings.id, id));
 }
 
