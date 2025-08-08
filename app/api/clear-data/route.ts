@@ -4,6 +4,16 @@ import { agencies, agents, bookings, db, hotels, roomTypes } from '@/lib/db';
 
 export async function POST() {
   try {
+    // Check if database connection exists
+    if (!db) {
+      return Response.json(
+        {
+          error: 'Database connection not available'
+        },
+        { status: 500 }
+      );
+    }
+
     // Delete in correct order to respect foreign key constraints
     await db.delete(bookings);
     await db.delete(roomTypes);

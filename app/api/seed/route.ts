@@ -4,6 +4,16 @@ import { agencies, agents, bookings, db, hotels, roomTypes } from '@/lib/db';
 
 export async function GET() {
   try {
+    // Check if database connection exists
+    if (!db) {
+      return Response.json(
+        {
+          error: 'Database connection not available'
+        },
+        { status: 500 }
+      );
+    }
+
     // Check if data already exists
     const existingAgents = await db.select().from(agents).limit(1);
 

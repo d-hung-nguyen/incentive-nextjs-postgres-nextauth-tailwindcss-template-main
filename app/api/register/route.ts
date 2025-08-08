@@ -4,12 +4,24 @@ import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
   try {
+    if (!db) {
+      return NextResponse.json(
+        {
+          error: 'Database connection not available'
+        },
+        { status: 500 }
+      );
+    }
+
     const body = await req.json();
     const { agent, agency, existingAgencyId } = body;
 
-    // Check if agent already exists
+    // Check if agent already exists - explicit column selection
     const existingAgent = await db
-      .select()
+      .select({
+        id: agents.id,
+        email: agents.email
+      })
       .from(agents)
       .where(eq(agents.email, agent.email))
       .limit(1);
@@ -33,8 +45,7 @@ export async function POST(req: Request) {
           address: agency.address,
           city: agency.city,
           country: agency.country,
-          zipCode: agency.zip_code,
-          status: 'pending'
+          zipCode: agency.zip_code
         })
         .returning({ id: agencies.id });
 

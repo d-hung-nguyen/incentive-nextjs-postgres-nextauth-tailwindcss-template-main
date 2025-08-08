@@ -8,6 +8,10 @@ export async function GET(req: Request) {
   const q = (searchParams.get('q') ?? '').trim();
 
   try {
+    if (!db) {
+      return NextResponse.json({ agencies: [] });
+    }
+
     if (!zip || !q) {
       return NextResponse.json({ agencies: [] });
     }

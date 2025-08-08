@@ -238,7 +238,10 @@ export async function getBookings(
 }
 
 export async function deleteBookingById(id: string) {
-  if (!db) return;
+  if (!db) {
+    console.warn('No database connection available for deleteBookingById');
+    return;
+  }
   await db.delete(bookings).where(eq(bookings.id, id));
 }
 
@@ -251,6 +254,10 @@ export async function getProducts(
   newOffset: number | null;
   totalProducts: number;
 }> {
+  if (!db) {
+    return { products: [], newOffset: null, totalProducts: 0 };
+  }
+
   if (search) {
     return {
       products: await db
@@ -279,5 +286,9 @@ export async function getProducts(
 }
 
 export async function deleteProductById(id: number) {
+  if (!db) {
+    console.warn('No database connection available for deleteProductById');
+    return;
+  }
   await db.delete(products).where(eq(products.id, id));
 }
